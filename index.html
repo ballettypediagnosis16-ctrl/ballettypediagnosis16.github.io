@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バレエタイプ診断16</title>
+    <style>
+        /* 画面全体の共通設定 */
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 0 auto; /* 左右のマージンを自動にして、コンテンツ全体を中央寄せ */
+            padding: 40px 20px;
+            background: linear-gradient(
+                135deg,
+                #ffeaa7 0%,
+                #a2cffe 35%,
+                #ffb7b2 70%,
+                #d1c4e9 100%
+            );
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* 質問画面と結果画面を中央寄せにする設定 */
+        #quiz-screen, #result-screen {
+            display: flex;
+            flex-direction: column; /* 中の要素を上から下に縦に並べる */
+            align-items: center;    /* 縦に並んだ要素を 「左右中央」 に寄せる */
+            text-align: center;     /* テキスト事態も中央揃えにする */
+
+            background-color: rgba(235, 245, 240, 0.85);
+            padding: 30px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        /* 質問１つひとつのボックス */
+        .question {
+            width: 100%; /* 横幅いっぱいに広げる */
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            text-align: left; /* ★質問文と選択肢は左詰め */
+        }
+
+        /* ラジオボタンの選択肢の間隔を少しあける */
+        .question label {
+            margin: 0 15px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        /* MBTI風の横並び選択エリア */
+        .mbti-options {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px ;
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        /* 両端の「はい」「いいえ」の文字 */
+        .label-text {
+            font-size: 16px ;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .side-yes { color:#2ecc71; margin-right: 10px; } /* 「はい」は緑系 */
+        .side-no { color: #e74c3c; margin-left: 10px; } /* 「いいえ」は赤系 */
+
+        /* ラジオボタンを囲う丸枠のベース設定 */
+        .mbti-btn {
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* ラジオボタン自体の標準の「●」を消して、枠全体をボタンにする */
+        .mbti-btn input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* MBTIらしく外側に行くほどボタンを大きくする設定 */
+        .btn-large { width: 40px; height: 37px; }
+        .btn-medium { width: 32px; height: 30px; }
+        .btn-small { width: 24px; height: 22px; }
+
+        /* ラジオボタンがチェックされたときの色変化 */
+        /* 左側３つ（「はい」側）が選ばれたら緑色に */
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(1),
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(2),
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(3) {
+            background-color: #2ecc71;
+            border-color: #2ecc71;
+        }
+        /* 右側３つ（「いいえ」側）が選ばれたら赤色に */
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(4),
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(5),
+        .mbti-btn:has(input[type="radio"]:checked):nth-of-type(6) {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }   
+
+        /* 質問文の文字の大きさと読みやすさを調整 */
+        .question p {
+            font-size: 18px;
+            line-height: 1.5;
+            color: #333333;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        /* 診断するボタン・もう一度ボタンのデザイン */
+        button {
+            margin-top: 20px;
+            padding: 12px 40px; /* 上下左右の余白を広げて押しやすく */
+            font-size: 18px; /* 文字を少し大きく */
+            font-weight: bold;
+            background-color: #00BFFF;
+            color: white;
+            border: none;
+            border-radius: 25px; /* ボタンの角を丸くして今風のデザインに */
+            cursor: pointer;
+            transition: background 0.3s; /* ホバー時のアニメーション */
+        }
+
+        /* ボタンにマウスを乗せたときの色 */
+        button:hover {
+            background-color: #d35400;
+        }
+
+        /* １行目：「あなたのタイプは…」のスタイル */
+        .result-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px
+        }
+
+        /* ２行目：「○○タイプ」のスタイル */
+        .result-type-name {
+            font-size: 28px;
+            font-weight: bold;
+            padding: 10px 25px; /* 文字のまわりの余白（枠のサイズ） */
+            border-radius: 50px; /* カプセル型の角丸にする */
+            margin-bottom: 15px; /* ３行目との間隔を少し調整 */
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        /* ３行目：「英字４文字」のスタイル */
+        .result-type-code {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        /* ４グループずつのカラー判定用クラス */
+        /* グループ１：黄色系 */
+        .bg-group1 { background-color: #fff2cc; color: #e2b33c !important; }
+        .color-group1 { color: #e2b33c; }
+        .border-group1 { border: 2px solid #fff2cc !important; background-color: #fffdf7 !important; }
+
+        /* グループ２：青色系 */
+        .bg-group2 { background-color: #cfe2f3; color: #6fa8dc !important; }
+        .color-group2 { color: #6fa8dc; }
+        .border-group2 { border: 2px solid #cfe2f3 !important; background-color: #f4f9fd !important; }
+
+        /* グループ３：赤色系 */
+        .bg-group3 { background-color: #f4cccc; color: #e06666 !important; }
+        .color-group3 { color: #e06666; }
+        .border-group3 { border: 2px solid #f4cccc !important; background-color: #fdf7f7 !important; }
+
+        /* グループ４：紫色系 */
+        .bg-group4 { background-color: #d9d2e9; color: #8e7cc3 !important; }
+        .color-group4 { color: #8e7cc3; }
+        .border-group4 { border: 2px solid #d9d2e9 !important; background-color: #f7f5fa !important; }
+
+        /* グラフ全体のコンテナ */
+        #result-charts-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 15px;
+            box-sizing: border-box;
+        }
+
+        /* 各グラフ（１項目ごと）の塊 */
+        .chart-row {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .chart-row:lastchild {
+            margin-bottom: 0;
+        }
+
+        /* 項目名と%表示のタイトル */
+        .chart-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 6px;
+        }
+        .chart-percentage {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* グラフの土台（左右の要素名とバーを横並びにする） */
+        .chart-bar-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        /* 左右の要素名 */
+        .element-label {
+            font-size: 13px;
+            color: #666;
+            width: 90px;
+            white-space: nowrap;
+        }
+        .element-label.left { text-align: right; }
+        .element-label.right { text-align: left; }
+
+        /* 棒グラフ本体の溝（レール） */
+        .chart-track {
+            flex-grow: 1;
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        /* スコアに応じて伸びる進捗バー */
+        .chart-fill {
+            height: 100%;
+            border-radius: 6px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 1s ease-out;
+        }
+
+        /* 丸の位置に関係なく、色付きのバーを常に100%（全塗）にする */
+        .chart-track .chart-fill {
+            width: 100% !important;
+        }
+
+        /* バーの上に乗る丸いつまみ（インジケータ―） */
+        .chart-dot {
+            width: 18px;
+            height: 18px;
+            background-color: #ffffff;
+            border: 3px solid #ccc;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: left 1s ease-out;
+        }
+
+        /* 各グループごとのバーの色 */
+        .bar-group1 { background-color: #e2b33c }
+        .bar-group2 { background-color: #6fa8dc }
+        .bar-group3 { background-color: #e06666 }
+        .bar-group4 { background-color: #8e7cc3 }
+
+        /* 解説テキストの角丸枠のスタイル */
+        #result-description-box {
+            margin-top: 25px;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 15px;
+
+            /* 上下中央揃え・左右左揃えのための設定 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: left;
+
+            /* イタリック（斜体）とフォントの調整 */
+            font-style: italic;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #444444;
+        }
+
+        /* 要素を非表示にするためのクラス */
+        .hidden {
+            display: none !important;
+        }
+
+        /* スマホ（画面幅480px以下）の時の余白均等調整 */
+        @media screen and (max-width: 480px) {
+            html, body {
+                overflow-x: hidden;
+            }
+
+            body {
+                padding: 15px 8px !important;
+            }
+
+            #quiz-screen, #result-screen {
+                margin-bottom: 0 !important;
+                width: 100% !important;
+                box-sizing: border-box;
+                border-radius: 16px !important;
+                padding: 25px 6px !important;
+            }
+
+            .question p {
+                font-size: 15px !important;
+                margin-bottom: 15px !important;
+            }
+
+            .question label {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .mbti-options {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0 !important;
+                justify-content: space-between !important;
+            }
+
+            .label-text {
+                font-size: 14px !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+            .side-yes { margin: 0 4px 0 0 !important; }
+            .side-no { margin: 0 0 0 4px !important; }
+
+            .btn-large { width: 30px; height: 30px; }
+            .btn-medium { width: 23px; height: 23px; }
+            .btn-small { width: 16px; height: 16px; }
+
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="quiz-screen">
+    <h1>バレエタイプ診断16</h1>
+    
+    <div class="question">
+        <p>01.誰もが一度は耳にしたことがあるような「超王道の定番名作」を鑑賞するのが好きだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q1" value="T_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q1" value="T_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q1" value="T_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q1" value="I_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q1" value="I_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q1" value="I_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>02.舞台やライブでは、静かに座って物語を追うものよりも、一瞬の超絶技巧や派手な演出、その場の「ライブ感の熱狂」にアドレナリンが出る作品が好きだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q2" value="E_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q2" value="E_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q2" value="E_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q2" value="D_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q2" value="D_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q2" value="D_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+    
+    <div class="question">
+        <p>03.アクションシーンを見るとテンションが上がる。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q3" value="P_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q3" value="P_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q3" value="P_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q3" value="G_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q3" value="G_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q3" value="G_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>04.アニメやドラマは毎週１話ずつ考察を楽しんだり、何日もかけてじっくり味わうのが好きだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q4" value="S_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q4" value="S_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q4" value="S_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q4" value="C_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q4" value="C_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q4" value="C_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>05.お金は貯金で眠らせるよりも、自己投資や投資信託といった攻めの資産運用に回したい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q5" value="I_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q5" value="I_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q5" value="I_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q5" value="T_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q5" value="T_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q5" value="T_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>06.物語はハッピーエンドよりも、バッドエンドやビターエンドの方が好きだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q6" value="D_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q6" value="D_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q6" value="D_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q6" value="E_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q6" value="E_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q6" value="E_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>07.周囲から「仕事が早いね」と言われるよりも、「仕事が丁寧で正確だね」と言われる方が嬉しい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q7" value="G_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q7" value="G_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q7" value="G_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q7" value="P_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q7" value="P_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q7" value="P_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>08.イントロや間奏が長い曲よりも、サビから始まったりキャッチーなメロディが繰り返される曲に惹かれる。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q8" value="C_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q8" value="C_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q8" value="C_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q8" value="S_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q8" value="S_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q8" value="S_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>09.休日の予定は、当日になって決めるよりも、あらかじめ行く場所や時間をスケジュールしておきたい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q9" value="T_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q9" value="T_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q9" value="T_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q9" value="I_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q9" value="I_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q9" value="I_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>10.「人生、楽しまなきゃ損だ」という言葉に強く共感する。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q10" value="E_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q10" value="E_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q10" value="E_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q10" value="D_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q10" value="D_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q10" value="D_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+    
+    <div class="question">
+        <p>11.洗練されたスマートさよりも、泥臭くても全力で限界に挑んでいる姿にこそ本物の美しさを感じる。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q11" value="P_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q11" value="P_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q11" value="P_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q11" value="G_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q11" value="G_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q11" value="G_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>12.話をするとき、結論だけをズバッと言われるよりも、そこに至るまでの経緯や背景も一緒に聞きたい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q12" value="S_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q12" value="S_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q12" value="S_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q12" value="C_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q12" value="C_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q12" value="C_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>13.洋服やヘアスタイルは、「みんなと同じ」を避け、どこかに自分らしいエッジや個性を入れたい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q13" value="I_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q13" value="I_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q13" value="I_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q13" value="T_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q13" value="T_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q13" value="T_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>14.激しい葛藤やドロドロとした愛憎劇を繰り広げているシーンほど、目が離せない。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q14" value="D_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q14" value="D_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q14" value="D_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q14" value="E_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q14" value="E_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q14" value="E_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>15.何事も、涼しい顔でそつなくこなす姿に憧れる。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q15" value="G_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q15" value="G_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q15" value="G_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q15" value="P_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q15" value="P_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q15" value="P_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>16.日常生活の中で「タイムパフォーマンス」を意識して行動することが多い。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q16" value="C_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q16" value="C_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q16" value="C_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q16" value="S_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q16" value="S_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q16" value="S_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>17.物事を進めるときは、独自のアイデアを試すよりも、過去の成功例やマニュアルに従う方が確実で好きだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q17" value="T_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q17" value="T_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q17" value="T_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q17" value="I_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q17" value="I_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q17" value="I_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>18.小難しいものよりも、直観的に楽しめるものをつい選びがちだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q18" value="E_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q18" value="E_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q18" value="E_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q18" value="D_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q18" value="D_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q18" value="D_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+    
+    <div class="question">
+        <p>19.デートで行くなら、静かで落ち着いたカフェよりもお祭りのような賑わった場所の方がいい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q19" value="P_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q19" value="P_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q19" value="P_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q19" value="G_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q19" value="G_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q19" value="G_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>20.「とりあえずやってみる」という言葉は、見通しが甘い気がして、自分からはあまり使いたくない。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q20" value="S_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q20" value="S_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q20" value="S_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q20" value="C_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q20" value="C_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q20" value="C_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>21.何事も「現状維持」ではなく、常に変化やアップデートを繰り返したい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q21" value="I_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q21" value="I_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q21" value="I_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q21" value="T_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q21" value="T_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q21" value="T_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>22.苦しみや挫折、葛藤こそが、人間を最も成長させ、深みを与えてくれると思う。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q22" value="D_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q22" value="D_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q22" value="D_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q22" value="E_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q22" value="E_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q22" value="E_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>23.スマートな身のこなしや、品格のある佇まいに憧れる。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q23" value="G_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q23" value="G_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q23" value="G_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q23" value="P_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q23" value="P_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q23" value="P_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>24.アプリの通知バッジは、見つけたらすぐに既読にして消したい。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q24" value="C_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q24" value="C_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q24" value="C_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q24" value="S_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q24" value="S_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q24" value="S_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>25.物の価値を決める上で、「歴史の長さ」や「受け継がれてきた伝統」は非常に重要な要素だと思う。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q25" value="T_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q25" value="T_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q25" value="T_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q25" value="I_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q25" value="I_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q25" value="I_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>26.努力は必ず報われると思う。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q26" value="E_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q26" value="E_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q26" value="E_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q26" value="D_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q26" value="D_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q26" value="D_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+    
+    <div class="question">
+        <p>27.周りの人たちが盛り上がっている場面では、自然と自分も感情が昂る。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q27" value="P_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q27" value="P_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q27" value="P_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q27" value="G_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q27" value="G_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q27" value="G_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <div class="question">
+        <p>28.交友関係やコンテンツの楽しみ方は、「広く浅く」よりも「狭く深く」を求めるタイプだ。</p>
+        <div class="mbti-options">
+            <span class="label-text side-yes">はい</span>
+
+            <label class="mbti-btn btn-large"><input type="radio" name="q28" value="S_3"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q28" value="S_2"></label>
+            <label class="mbti-btn btn-small"><input type="radio" name="q28" value="S_1"></label>
+
+            <label class="mbti-btn btn-small"><input type="radio" name="q28" value="C_1"></label>
+            <label class="mbti-btn btn-medium"><input type="radio" name="q28" value="C_2"></label>
+            <label class="mbti-btn btn-large"><input type="radio" name="q28" value="C_3"></label>
+
+            <span class="label-text side-no">いいえ</span>
+        </div>
+    </div>
+
+    <button onclick="calculateResult()">診断する</button>
+</div> <div id="result-screen" class="hidden">
+    <h1>診断結果</h1>
+    <div id="result"></div>
+
+    <div id="result-image-container" style="margin: 15px auto; width: 100%; max-width: 320px; text-align: center;">
+        <img id="result-image" src="" alt="" style="width: 100%; height: auto; display: none; border-radius: 12px;">
+    </div>
+
+    <div id="result-charts-container">
+        </div>
+
+    <!-- JavaScriptから解説文を受け取る枠 -->
+    <div id="result-description-box"></div>
+
+    <br><br>
+    <button onclick="location.reload()">もう一度診断する</button>
+</div>
+
+    <script>
+        // 16タイプごとの「考案済みワード」の定義
+        const typeNames = {
+            "TEPS": "ドン・キホーテ タイプ",
+            "TEPC": "サタネラ タイプ",
+            "IEPS": "ピーターパン タイプ",
+            "IEPC": "タリスマン タイプ",
+            "TEGS": "くるみ割り人形 タイプ",
+            "TEGC": "ゼンツァーノ タイプ",
+            "IEGS": "シンデレラ タイプ",
+            "IEGC": "エチュード タイプ",
+            "TDPS": "パリの炎 タイプ",
+            "TDPC": "シェヘラザード タイプ",
+            "IDPS": "ザ・カブキ タイプ",
+            "IDPC": "カルメン タイプ",
+            "TDGS": "ジゼル タイプ",
+            "TDGC": "ラ・シルフィード タイプ",
+            "IDGS": "マノン タイプ",
+            "IDGC": "セレナーデ タイプ"
+        };
+
+        // 16パターンごとの「解説テキスト」
+        const typeDescriptions = {
+            "TEPS": `あなたにオススメのバレエ作品は“ドン・キホーテ タイプ”です。
+古くから上演されてきた王道作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・ドン・キホーテ
+・海賊（プティパ版）
+・エスメラルダ（ペロー版）
+・ナポリ`,
+            "TEPC": `あなたにオススメのバレエ作品は“サタネラ タイプ”です。
+古くから上演されてきた王道作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・サタネラ（グラン・パ・ド・ドゥ）
+・アルレキナーダ（グラン・パ・ド・ドゥ）
+・人形の精
+・薔薇の精`,
+            "IEPS": `あなたにオススメのバレエ作品は“ピーターパン タイプ”です。
+100年以内に作られた新しめの作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・ピーターパン
+・アラジン
+・ドラゴン・クエスト`,
+            "IEPC": `あなたにオススメのバレエ作品は“タリスマン タイプ”です。
+100年以内に作られた新しめの作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・タリスマン（グラン・パ・ド・ドゥ）
+・ボレロ
+・ダイアナとアクテオン（グラン・パ・ド・ドゥ from エスメラルダ）`,
+            "TEGS": `あなたにオススメのバレエ作品は“くるみ割り人形 タイプ”です。
+古くから上演されてきた王道作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・くるみ割り人形
+・眠れる森の美女
+・白鳥の湖
+・パキータ
+・ライモンダ
+・ラ・フィーユ・マル・ガルデ
+・コッペリア`,
+            "TEGC": `あなたにオススメのバレエ作品は“ゼンツァーノ タイプ”です。
+古くから上演されてきた王道作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・ゼンツァーノの花祭り（グラン・パ・ド・ドゥ）
+・騎兵隊の休息
+・レ・シルフィード`,
+            "IEGS": `あなたにオススメのバレエ作品は“シンデレラ タイプ”です。
+100年以内に作られた新しめの作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・シンデレラ
+・ジュエルズ
+・シルヴィア（アシュトン版）
+・真夏の夜の夢（バランシン版）`,
+            "IEGC": `あなたにオススメのバレエ作品は“エチュード タイプ”です。
+100年以内に作られた新しめの作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+喜劇系の作品なので、見終わった後も明るい気分で過ごせることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・エチュード
+・真夏の夜の夢（アシュトン版）
+・バレエの情景`,
+            "TDPS": `あなたにオススメのバレエ作品は“パリの炎 タイプ”です。
+古くから上演されてきた王道作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・パリの炎
+・ラ・バヤデール
+・エスメラルダ（プティパ版）`,
+            "TDPC": `あなたにオススメのバレエ作品は“シェヘラザード タイプ”です。
+古くから上演されてきた王道作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・シェヘラザード
+・春の祭典（ニジンスキー版）
+・火の鳥`,
+            "IDPS": `あなたにオススメのバレエ作品は“ザ・カブキ タイプ”です。
+100年以内に作られた新しめの作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・ザ・カブキ
+・海賊（熊川版）
+・スパルタクス
+・ノートルダムドパリ（プティ版エスメラルダ）
+・愛の伝説
+・バフチサライの泉
+・レ・ミゼラブル`,
+            "IDPC": `あなたにオススメのバレエ作品は“カルメン タイプ”です。
+100年以内に作られた新しめの作品であり、パワフルで情熱的な舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・カルメン
+・若者と死
+・春の祭典（ベジャール版）`,
+            "TDGS": `あなたにオススメのバレエ作品は“ジゼル タイプ”です。
+古くから上演されてきた王道作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・ジゼル
+・ロミオとジュリエット
+・白鳥の湖（ヌレエフ版）`,
+            "TDGC": `あなたにオススメのバレエ作品は“ラ・シルフィード タイプ”です。
+古くから上演されてきた王道作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・ラ・シルフィード
+・瀕死の白鳥
+・レ・シルフィード
+・ジゼル（第２幕）`,
+            "IDGS": `あなたにオススメのバレエ作品は“マノン タイプ”です。
+100年以内に作られた新しめの作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+世界観に長い時間浸れるのもポイント！
+
+【おすすめ作品一覧】
+・マノン
+・オネーギン
+・椿姫（ノイマイヤー版）`,
+            "IDGC": `あなたにオススメのバレエ作品は“セレナーデ タイプ”です。
+100年以内に作られた新しめの作品であり、流麗でエレガンスな舞台は、まさにあなたにピッタリ！
+悲劇・教訓系の作品なので、見終わった後も深く余韻を楽しめることでしょう。
+比較的短い時間で、さっと簡単に楽しめるのもポイント！
+
+【おすすめ作品一覧】
+・セレナーデ
+・大地の歌
+・マルグリットとアルマン（アシュトン版椿姫）`
+        };
+
+        function calculateResult() {
+            // 未回答の設問がないか厳密にチェック
+            const totalQuestions = 28;
+            const checkedAnswers = document.querySelectorAll('.mbti-options input[type="radio"]:checked');
+
+            if (checkedAnswers.length < totalQuestions) {
+                alert("未回答の質問があります。");
+                return;
+            }
+
+            let scores = { T: 0, I: 0, E: 0, D: 0, P: 0, G: 0, S: 0, C: 0 };
+            
+            // 選択された回答をチェック
+            const answers = document.querySelectorAll('.mbti-options input[type="radio"]:checked');
+            answers.forEach((ans) => {
+                const [targetCharacter, level] = ans.value.split('_');
+                scores[targetCharacter] += parseInt(level, 10);
+            });
+
+            // 4つの指標を判定
+            let type = "";
+            type += scores.T > scores.I ? "T" : "I";
+            type += scores.E > scores.D ? "E" : "D";
+            type += scores.P > scores.G ? "P" : "G";
+            type += scores.S > scores.C ? "S" : "C";
+
+            // 16パターンの辞書から、該当する日本語ワードを取得
+            const JapaneseTypeName = typeNames[type];
+
+            // タイプによって適用するカラーのグループ（クラス名）
+            let colorGroup = "";
+            if (["TEPS", "TEPC", "IEPS", "IEPC"].includes(type)) {
+                colorGroup = "group1";
+            } else if (["TEGS", "TEGC", "IEGS", "IEGC"].includes(type)) {
+                colorGroup = "group2";
+            } else if (["TDPS", "TDPC", "IDPS", "IDPC"].includes(type)) {
+                colorGroup = "group3";
+            } else if (["TDGS", "TDGC", "IDGS", "IDGC"].includes(type)) {
+                colorGroup = "group4";
+            }
+
+            // HTML構造を３行に分けて流し込み
+            document.getElementById("result").innerHTML = `
+                <div class="result-label">あなたのタイプは…</div>
+                <div class="result-type-name bg-${colorGroup}">${JapaneseTypeName}</div>
+                <div class="result-type-code color-${colorGroup}">（${type}）</div>
+            `;
+
+            // 確定した診断タイプに合わせた画像をセットして表示
+            const resultImg = document.getElementById("result-image");
+            resultImg.src = `./images/${type}.png`;
+            resultImg.style.display = "block";
+
+            // 各指標の％を計算（全28問、各４指標につき最大21点満点として計算）
+            // どちらか片方のパーセンテージを算出し、50%を基準に左右へ割り振り
+            function calcPercent(leftScore, rightScore) {
+                const total = leftScore + rightScore;
+                if (total === 0) return 50; 
+                return Math.round((rightScore / total) * 100);
+            }
+
+            //各項目の「右側（I,D,G,C）に寄っている割合（0%~100%）を算出
+            const pTI = calcPercent(scores.T, scores.I);
+            const pED = calcPercent(scores.E, scores.D);
+            const pPG = calcPercent(scores.P, scores.G);
+            const pSC = calcPercent(scores.S, scores.C);
+
+            // 表示用のデータをまとめる配列（項目名、左右の要素、スコア割合、テーマカラー）
+            const chartData = [
+                { title: "原動力", left: "保守型(T)", right: "変革型(I)", percent: pTI, groupClass: "bar-group1" },
+                { title: "価値観", left: "エンタメ型(E)", right: "教訓・哲学型(D)", percent: pED, groupClass: "bar-group2" },
+                { title: "感情", left: "情熱型(P)", right: "流麗型(G)", percent: pPG, groupClass: "bar-group3" },
+                { title: "楽しみ方", left: "堪能・咀嚼型(S)", right: "勢い・刺激型(C)", percent: pSC, groupClass: "bar-group4" }
+            ];
+
+            // ４つのグラフのHTMLを動的に組み立てる
+            let chartsHtml = "";
+            chartData.forEach(item => {
+                let displayTitle = "";
+                // 50%以上なら右側要素の勝ち、50%未満なら左側要素の勝ちとして%の見た目を調整
+                if (item.percent >= 50) {
+                    displayTitle = `<span class="${item.groupClass.replace('bar-', 'color-')}">${item.percent}% ${item.right.split('(')[0]}</span>`;
+                } else {
+                    displayTitle = `<span class="${item.groupClass.replace('bar-', 'color-')}">${100 - item.percent}% ${item.left.split('(')[0]}</span>`;
+                }
+
+                chartsHtml += `
+                    <div class="chart-row">
+                        <div class="chart-title">${item.title} : ${displayTitle}</div>
+                        <div class="chart-bar-area">
+                            <span class="element-label left">${item.left}</span>
+                            <div class="chart-track">
+                                <div class="chart-fill ${item.groupClass}" style="width: ${item.percent}%;"></div>
+                                <div class="chart-dot" style="left: ${item.percent}%; border-color: var(--bar-color);"></div>
+                            </div>
+                            <span class="element-label right">${item.right}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // HTMLにグラフを流し込む
+            document.getElementById("result-charts-container").innerHTML = chartsHtml;
+
+            // 割り出されたタイプに応じた解説テキストを枠の中に流し込む
+            const descriptionBox = document.getElementById("result-description-box");
+            if (descriptionBox) {
+                descriptionBox.innerText = typeDescriptions[type];
+
+                //解説枠のクラスをリセットして、新しいグループの枠色クラスを付与
+                descriptionBox.className = ""; //一旦デザインをクリア
+                descriptionBox.classList.add(`border-${colorGroup}`);
+            }
+
+            // 画面の切り替え処理
+            // 1. 質問画面に 「hidden」 クラスをつけて隠す
+            document.getElementById("quiz-screen").classList.add("hidden");
+
+            // 2. 結果画面から 「hidden」 クラスを取り除いて表示する
+            document.getElementById("result-screen").classList.remove("hidden");
+
+            // 3. 画面を一番上までスクロールさせる
+            window.scrollTo(0,0);
+        }
+    </script>
+</body>
+</html>
