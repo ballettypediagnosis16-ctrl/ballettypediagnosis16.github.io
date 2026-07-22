@@ -37,13 +37,12 @@
             padding: 40px 20px;
             background: linear-gradient(
                 135deg,
-                #ffeaa7 0%,
-                #a2cffe 35%,
-                #ffb7b2 70%,
-                #d1c4e9 100%
+                #f8fbf9 0%,
+                #eef7f2 100%
             );
             background-attachment: fixed;
             min-height: 100vh;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
         /* 質問画面と結果画面を中央寄せにする設定 */
@@ -92,21 +91,25 @@
             font-weight: bold;
             white-space: nowrap;
         }
-        .side-yes { color:#2ecc71; margin-right: 10px; } /* 「はい」は緑系 */
-        .side-no { color: #e74c3c; margin-left: 10px; } /* 「いいえ」は赤系 */
+        .side-yes { color:#33ff66; margin-right: 10px; } /* 「はい」は緑系 */
+        .side-no { color: #ff0033; margin-left: 10px; } /* 「いいえ」は赤系 */
 
         /* ラジオボタンを囲う丸枠のベース設定 */
         .mbti-btn {
             cursor: pointer;
             border-radius: 50%;
-            border: 2px solid #ccc;
+            border: 3px solid #ccc;
             background-color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
             flex-shrink: 0;
             aspect-ratio: 1 / 1;
+        }
+
+        .mbti-btn:hover {
+            border-color: #bdc3c7;
         }
 
         /* ラジオボタン自体の標準の「●」を消して、枠全体をボタンにする */
@@ -121,7 +124,7 @@
         }
 
         /* MBTIらしく外側に行くほどボタンを大きくする設定 */
-        .btn-large { width: 40px; height: 37px; }
+        .btn-large { width: 40px; height: 38px; }
         .btn-medium { width: 32px; height: 30px; }
         .btn-small { width: 24px; height: 22px; }
 
@@ -130,15 +133,19 @@
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(1),
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(2),
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(3) {
-            background-color: #2ecc71;
+            background-color: #ffffff;
             border-color: #2ecc71;
+            border-width: 4px;
+            transform: scale(1.08);
         }
         /* 右側３つ（「いいえ」側）が選ばれたら赤色に */
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(4),
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(5),
         .mbti-btn:has(input[type="radio"]:checked):nth-of-type(6) {
-            background-color: #e74c3c;
+            background-color: #ffffff;
             border-color: #e74c3c;
+            border-width: 4px;
+            transform: scale(1.08);
         }   
 
         /* 質問文の文字の大きさと読みやすさを調整 */
